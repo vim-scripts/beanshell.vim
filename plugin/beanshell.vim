@@ -1,42 +1,52 @@
-" $Id: beanshell.vim,v 1.2 2002/09/06 03:10:31 henry Exp $
+" $Id: beanshell.vim,v 1.3 2002/09/07 02:59:22 henry Exp $
 "
 " Name:             BeanShell plugin
 " Description:      Runs the current buffer using BeanShell
 " Author:           Henry So, Jr. <henryso at panix dot com>
-" Version:          1.0
-" Modified:         5 August 2002
+" Version:          1.1
+" Modified:         6 September 2002
 " License:          Released into the public domain.
 "
 " Usage:            Copy this file into the plugins directory if you want it
 "                   to be automatically sourced.  Otherwise, :source it when
 "                   you need it.
 "
-"                   By default, <Leader>br will invoke BeanShell.
+"                   To invoke BeanShell, either issue the command :BeanShell
+"                   or enter the appropriate key command (by default, this is
+"                   <Leader>br).
 "
-" Configuration:    Use :let to set these variables to customize the behavior
-"                   of the BeanShell plugin.
+" Configuration:    The default command for running BeanShell is
+"                   "java bsh.Interpreter".  To change this command, use :let
+"                   to set the BeanShell_Cmd variable to the command you want
+"                   to use.  For example:
 "
-"                   BeanShell_Key   (Default: "<Leader>br")
-"                       Defines the key mapping to use to invoke BeanShell.
+"                       :let BeanShell_Cmd = "/path/to/java bsh.Interpreter"
 "
-"                   BeanShell_Cmd   (Default: "java bsh.Interpreter")
-"                       Defines the command to use to run BeanShell.
+"                   The default key command to invoke BeanShell is <Leader>br.
+"                   To change this keymapping, use :map to assign the
+"                   key you want to <Plug>BeanShell.  For example:
+"
+"                       :map <S-F3> <Plug>BeanShell
 "
 " Acknowledgments:  This script owes its roots and style to Jamis Buck's
 "                   sqlplus.vim, Yegappan Lakshmanan's taglist.vim, and
 "                   Anthony Kruize / Michael Geddes's ShowMarks.
 
-if exists('loaded_beanshell') || &cp
+if exists('loaded_beanshell')
     finish
 endif
-let loaded_beanshell=1
+let loaded_beanshell = 1
 
-if !exists('BeanShell_Key')
-    let BeanShell_Key = "<Leader>br"
-endif
+let s:save_cpoptions = &cpoptions
+set cpoptions&vim
 
+" set-up defaults if necessary
 if !exists('BeanShell_Cmd')
     let BeanShell_Cmd = "java bsh.Interpreter"
+endif
+
+if !hasmapto("<Plug>BeanShell")
+    map <unique> <Leader>br <Plug>BeanShell
 endif
 
 " Function:     BeanShell_Run
@@ -68,5 +78,15 @@ function! s:BeanShell_ConfigureOutputWindow() "{{{1
   normal 1G
 endfunction "}}}
 
-exe 'nnoremap <unique> <silent> ' . BeanShell_Key . 
-            \ " :call <SID>BeanShell_Run()<CR>"
+" Set up entry points: the command, the keymapping, and the menu.
+if !exists(":BeanShell")
+    command -nargs=0 BeanShell :call <SID>BeanShell_Run()
+endif
+
+noremap <unique> <script> <Plug>BeanShell <SID>BeanShell_Run
+
+noremenu <script> Plugin.Invoke\ BeanShell <SID>BeanShell_Run
+
+noremap <silent> <SID>BeanShell_Run :call <SID>BeanShell_Run()<CR>
+
+let &cpoptions = s:save_cpoptions
